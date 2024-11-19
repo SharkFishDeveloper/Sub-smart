@@ -20,54 +20,64 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    async signIn({ user, account, profile }) {
-      const useremail: string | undefined = user.email as string;
-      const username: string | undefined = user.name as string;
-      
-      const existingUser = await prisma.user.findUnique({
-        where: { email: useremail },
-      });
+    async signIn({ user }) {
+      const useremail = user.email as string;
+      const username = user.name as string;
 
       try {
-        if (!existingUser) {
-          if (useremail && username) {
-            const newUser = await prisma.user.create({
-              data: {
-                email: useremail,
-                name: username,
-              },
-            });
-            user.id = newUser.email; // Use email as the ID
-          }
-        } else {
-          console.log("Existing user", existingUser);
-          user.id = existingUser.email; // Use email as the ID
+        const existingUser = await prisma.user.findUnique({
+          where: { email: useremail },
+        });
+
+        if (!existingUser && useremail && username) {
+          await prisma.user.create({
+            data: {
+              email: useremail,
+              name: username,
+            },
+          });
         }
       } catch (error) {
-        console.log("Next auth error ####################", error);
+        console.error("Sign-in error:", error);
         return false;
       }
       return true;
     },
 
-    jwt: ({ token, user }) => {
-      if (user) {
-        token.userId = user.id; // Store email as userId in the token
+    async jwt({ token, user }) {
+      if (user?.email) {
+        token.userId = user.email; // Use email as userId
       }
       return token;
     },
 
-    session: ({ session, token }: any) => {
-      if (session.user) {
-        session.user.id = token.userId; // Assign the email as the user ID in the session
-        // Only keep name and email in session
-        session.user = {
-          name: session.user.name,
-          email: session.user.email,
-        };
+    async session({ session, token }) {
+      if (token?.userId) {
+        try {
+          const userData = await prisma.user.findUnique({
+            where: {
+              email: session.user.email!,
+            },
+            include: {
+              reminders: true, // Fetch reminders along with the user
+            },
+          });
+    
+          if (userData) {
+            session.user = {
+              id: userData.id,
+              name: userData.name as string,
+              email: userData.email,
+              reminders: userData.reminders, // Match the type declaration
+            };
+          }
+        } catch (error) {
+          console.error("Session callback error:", error);
+        }
       }
       return session;
-    },
+    }
+    
   },
 });
 
