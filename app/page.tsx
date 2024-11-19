@@ -9,11 +9,11 @@ export default function Home() {
   const session = useSession();
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     dates: [""],
     periodType: "Month", // Default dropdown value
     periodValue: 1, // Default number of months/weeks
     customDates: [],
+    message:""
   });
 
   const [reminderDates, setReminderDates] = useState([]);
@@ -25,7 +25,7 @@ export default function Home() {
   };
 // @ts-expect-error: Type error that we intentionally suppress
   const handleDateChange = (index, value) => {
-    if (new Date(value) < new Date()) {
+    if (new Date(value) <= new Date()) {
       alert("Date must be in the future.");
       return;
     }
@@ -110,12 +110,21 @@ export default function Home() {
       const resp = await  add_reminder({
         email: userId,
         taskname: formData.name,
-        dates: reminderDates
+        dates: reminderDates,
+        message:formData.message
       });
       if(resp.status!==200){
         alert(resp.message)
       }else{        
         alert(resp.message)
+        setFormData({
+          name: "",
+          dates: [""], // Reset dates to a single empty string
+          periodType: "Month", // Default dropdown value
+          periodValue: 1, // Default number of months/weeks
+          customDates: [],
+          message:""
+        });
       }
     }else{
       alert("Please sign in")
@@ -146,19 +155,20 @@ export default function Home() {
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-gray-700 font-medium">
-            User Email
+          <label htmlFor="name" className="block text-gray-700 font-medium">
+            Message for reminder
           </label>
           <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
+            type="text"
+            id="message"
+            name="message"
+            value={formData.message}
             onChange={handleInputChange}
             className="w-full px-4 py-2 border rounded focus:outline-none focus:ring focus:ring-blue-300"
             required
           />
         </div>
+
 
         <div>
           <label className="block text-gray-700 font-medium">

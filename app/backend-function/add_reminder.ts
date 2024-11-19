@@ -3,7 +3,7 @@
 import prisma from "@/util/db"
 
 
-export async function add_reminder({email,taskname,dates}: { email: string; taskname: string; dates: string[] }) {
+export async function add_reminder({email,taskname,dates,message}: { email: string; taskname: string; dates: string[],message:string }) {
     try {
         await prisma.reminder.create({
             data: {
@@ -14,6 +14,7 @@ export async function add_reminder({email,taskname,dates}: { email: string; task
                   email:email, // Connect the reminder to the user by their email
                 },
               },
+              message:message
             },
           });
           return {message:"Added reminder successfully",status:200}
