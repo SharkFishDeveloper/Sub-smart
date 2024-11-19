@@ -1,8 +1,8 @@
 "use client";
 import { useSession } from "next-auth/react";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { delete_reminder } from "../backend-function/delete_reminder";
 
-// Define types for the reminder and user
 type Reminder = {
   id: number;
   name: string;
@@ -17,7 +17,34 @@ type User = {
 
 const Reminder: React.FC = () => {
   const { data: session, status } = useSession();
-  const userData = session?.user as User | undefined; // Explicitly type userData
+  const userData = session?.user as User | undefined; 
+
+  // useState to store reminders
+  const [reminders, setReminders] = useState<Reminder[]>(userData?.reminders || []);
+
+  // useEffect to update reminders when userData changes
+  useEffect(() => {
+    if (userData?.reminders) {
+      setReminders(userData.reminders);
+    }
+  }, [userData?.reminders]);
+
+  const handleDelete = async (id: number) => {
+    const userId = session?.user?.email;
+    if (userId) {
+      const resp = await delete_reminder({ reminderId: id, email: userId });
+      alert(resp.message);
+
+      if (resp.status === 200) {
+        // Update the state by filtering out the deleted reminder
+        setReminders((prevReminders) =>
+          prevReminders.filter((reminder) => reminder.id !== id)
+        );
+      }
+    } else {
+      alert("Please sign in");
+    }
+  };
 
   return (
     <div className="p-4">
@@ -27,19 +54,27 @@ const Reminder: React.FC = () => {
           <h2 className="text-lg font-semibold">Hello, {userData.name}!</h2>
           <p className="text-sm text-gray-600 mb-4">Email: {userData.email}</p>
 
-          {userData.reminders && userData.reminders.length > 0 ? (
+          {reminders.length > 0 ? (
             <div>
-              {userData.reminders.map((reminder) => (
+              {reminders.map((reminder) => (
                 <div
                   key={reminder.id}
-                  className="border border-gray-300 rounded-md p-4 mb-4 shadow-sm"
+                  className="border border-gray-300 rounded-md p-4 mb-4 shadow-sm flex justify-between items-center"
                 >
-                  <h3 className="text-lg font-medium">{reminder.name}</h3>
-                  <ul className="mt-2 list-disc list-inside text-gray-700">
-                    {reminder.dates.map((date, index) => (
-                      <li key={index}>{date}</li>
-                    ))}
-                  </ul>
+                  <div>
+                    <h3 className="text-lg font-medium">{reminder.name}</h3>
+                    <ul className="mt-2 list-disc list-inside text-gray-700">
+                      {reminder.dates.map((date, index) => (
+                        <li key={index}>{date}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <button
+                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+                    onClick={() => handleDelete(reminder.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               ))}
             </div>
