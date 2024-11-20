@@ -15,16 +15,6 @@ COPY . .
 RUN npm run build
 
 
-# Set environment variables
-# ENV NODE_ENV=production
-# ENV DATABASE_URL="postgresql://iamuser:mypassword@subsmartdb.c1esicksyoj0.ap-south-1.rds.amazonaws.com:5432/subsmartdb"
-
-# ENV NEXTAUTH_SECRET=password_nextauth
-
-# ENV GOOGLE_ID=440557060881-fjvmfti4rl33nm1eoeaqbf55pfblvrh7.apps.googleusercontent.com
-
-# ENV GOOGLE_SECRET=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
-
 
 # Expose the port the app will run on
 EXPOSE 3000
